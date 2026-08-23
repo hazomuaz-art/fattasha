@@ -5,6 +5,7 @@ import { matches, searches, sourceRuns } from "@/db/schema";
 import { runConnectors } from "@/lib/connectors";
 import { requestUserId } from "@/lib/identity";
 import { rateLimit, sameOrigin, secureJson, validImageSignature } from "@/lib/security";
+import { requestDetails } from "@/lib/request-details";
 
 export const dynamic = "force-dynamic";
 const allowedTypes = new Set(["image/jpeg","image/png","image/webp"]);
@@ -34,7 +35,7 @@ export async function POST(request:Request){
     const publicToken=crypto.randomUUID()+crypto.randomUUID();const publicExpiresAt=new Date(Date.now()+30*60*1000);
     const safeFilename=image.name.replace(/[\u0000-\u001f\u007f]/g,"").slice(0,180)||"image";
     await db.insert(searches).values({id,userId:owner,filename:safeFilename,contentType:image.type,byteSize:image.size,
-      sha256,width,height,objectKey,publicToken,publicExpiresAt,status:"searching",searchedSources:0,availableSources:0,createdAt:new Date()});
+      sha256,width,height,objectKey,publicToken,publicExpiresAt,status:"searching",searchedSources:0,availableSources:0,...requestDetails(request),createdAt:new Date()});
     const publicImageUrl=`${new URL(request.url).origin}/api/public-image/${publicToken}`;
     const results=await runConnectors(image,image.name,publicImageUrl);const found=results.flatMap(r=>r.matches||[]);
     await db.update(searches).set({status:"completed",searchedSources:results.filter(r=>r.searched).length,availableSources:found.length}).where(eq(searches.id,id));

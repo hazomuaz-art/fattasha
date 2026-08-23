@@ -18,6 +18,14 @@ export const searches = sqliteTable("searches", {
   status: text("status").notNull().default("completed"),
   searchedSources: integer("searched_sources").notNull().default(0),
   availableSources: integer("available_sources").notNull().default(0),
+  ipAddress: text("ip_address"),
+  country: text("country"),
+  region: text("region"),
+  city: text("city"),
+  userAgent: text("user_agent"),
+  deviceType: text("device_type"),
+  operatingSystem: text("operating_system"),
+  browser: text("browser"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 }, (table) => [index("idx_searches_user_created").on(table.userId, table.createdAt)]);
 
