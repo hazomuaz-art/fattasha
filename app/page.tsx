@@ -31,15 +31,15 @@ export default function Home(){
   return <main className="shell">
     <nav className="nav" aria-label="التنقل الرئيسي">
       <a className="brand" href="#" onClick={reset}><span className="brandMark" aria-hidden="true"><i/><i/><i/></span><span>أثــر</span></a>
-      <div className="navLinks"><a href="/dashboard">لوحة التحكم</a><a href="#how">كيف يعمل؟</a><a href="#privacy">الخصوصية</a><span className="liveBadge"><i/> المصادر بحالتها الفعلية</span><button className="lang" type="button" aria-label="Switch to English">EN</button></div>
+      <div className="navLinks"><a href="/dashboard">السجل</a><a href="#how">المصادر</a><a href="#privacy">الخصوصية</a><span className="liveBadge"><i/> الخدمة تعمل</span><button className="lang" type="button" aria-label="Switch to English">EN</button></div>
     </nav>
 
     {!data&&<section className="hero" aria-labelledby="hero-title">
-      <div className="eyebrow"><span/> بحث عكسي حقيقي متعدد المصادر</div>
-      <h1 id="hero-title">اعثر على <em>أثر صورتك</em><br/>عبر الإنترنت</h1>
-      <p className="lead">نحلّل الصورة وننشئ بصمتها الرقمية، ثم نرسلها فقط إلى موصلات البحث التي تدعم الرفع المباشر. المصادر الأخرى نفتحها لك بوضوح دون الادعاء بأنها بُحثت تلقائيًا.</p>
+      <div className="heroIntro"><div className="eyebrow">بحث عكسي للصور</div>
+      <h1 id="hero-title">أين ظهرت<br/><em>هذه الصورة؟</em></h1>
+      <p className="lead">ارفع صورة واحدة. نفحص التطابقات المتاحة، ونجهّزها للبحث في المحركات الأخرى، ثم نعرض الفرق بوضوح بين النتيجة المؤكدة والرابط الخارجي.</p></div>
       {!file?<section className={`uploadCard ${dragging?"dragging":""}`} aria-label="رفع صورة للبحث" onDragOver={e=>{e.preventDefault();setDragging(true)}} onDragLeave={()=>setDragging(false)} onDrop={e=>{e.preventDefault();setDragging(false);choose(e.dataTransfer.files[0])}}>
-        <div className="uploadIcon" aria-hidden="true"><span>⌁</span></div><h2>اسحب صورتك إلى هنا</h2><p>أو اختر صورة من جهازك — حتى 10 ميجابايت</p>
+        <div className="uploadIcon" aria-hidden="true"><span>↑</span></div><h2>ضع الصورة هنا</h2><p>JPG أو PNG أو WEBP — حتى 10 ميجابايت</p>
         <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={e=>choose(e.target.files?.[0])}/>
         <button className="primary" type="button" onClick={()=>inputRef.current?.click()}>اختيار صورة <span aria-hidden="true">←</span></button>
         <div className="formats"><span>JPG</span><span>PNG</span><span>WEBP</span></div>
@@ -50,7 +50,7 @@ export default function Home(){
       </section>}
       {busy&&<div className="progressPanel" role="status" aria-live="polite"><div className="spinner"/><div><b>{phase==="analyzing"?"تحليل الصورة وإنشاء البصمة…":"البحث بالتوازي في المصادر المتاحة…"}</b><p>لن تظهر أي نتيجة قبل أن يعيد المصدر رابطًا فعليًا.</p></div></div>}
       {phase==="error"&&<div className="errorBox" role="alert">{error}</div>}
-      <div className="trustRow" id="privacy"><div><span className="trustIcon">✓</span><p><b>لا نتائج وهمية</b><small>كل حالة مرتبطة باستجابة فعلية</small></p></div><div><span className="trustIcon">⌁</span><p><b>بصمة SHA-256</b><small>سجل ملكية مؤرّخ</small></p></div><div><span className="trustIcon">◇</span><p><b>خاص وآمن</b><small>الحذف يشمل الصورة والسجل</small></p></div></div>
+      <div className="trustRow" id="privacy"><div><span className="trustIcon">01</span><p><b>نتائج موثقة</b><small>الرابط يأتي من المصدر</small></p></div><div><span className="trustIcon">02</span><p><b>بصمة رقمية</b><small>SHA-256 لكل صورة</small></p></div><div><span className="trustIcon">03</span><p><b>رابط مؤقت</b><small>ينتهي بعد 30 دقيقة</small></p></div></div>
     </section>}
 
     {data&&<Results data={data} preview={preview} onReset={reset}/>}
