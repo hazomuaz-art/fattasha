@@ -1,7 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 
-type Source={id:string;name:string;kind:"visual"|"manual";status:"available"|"unavailable";resultUrl?:string;detail:string;durationMs:number};
+type Source={id:string;name:string;kind:"visual"|"manual";status:"available"|"unavailable";resultUrl?:string;detail:string;durationMs:number;loginRequired?:boolean;imageSearch?:boolean};
 type SearchResponse={search:{id:string;assetId:string;sha256:string;width:number;height:number;createdAt:string};sources:Source[]};
 function visitorHeader(){let id=localStorage.getItem("athar-visitor-id");if(!id){id=crypto.randomUUID();localStorage.setItem("athar-visitor-id",id)}return {"x-athar-visitor":id}}
 
@@ -53,19 +53,19 @@ export default function Home(){
     </section>}
 
     {data&&<Results data={data} preview={preview} onReset={reset}/>}
-    <section className="sourceStrip" id="how"><span>المصادر الموصولة في هذه النسخة</span><div className="sourceNames"><b>Google Lens · تلقائي</b><b>TinEye · رفع مباشر</b><b>Yandex · رفع مباشر</b><b>Bing · رفع مباشر</b></div></section>
+    <section className="sourceStrip" id="how"><span>المصادر الموصولة في هذه النسخة</span><div className="sourceNames"><b>Google Lens · تلقائي</b><b>TinEye / Yandex / Bing · رفع مباشر</b><b>Pinterest Lens · حساب مجاني</b><b>منصات اجتماعية · بحث يدوي بحساب مجاني</b></div></section>
   </main>
 }
 
 function Results({data,preview,onReset}:{data:SearchResponse;preview:string;onReset:()=>void}){
-  const automated=data.sources.filter(s=>s.kind==="visual");const manual=data.sources.filter(s=>s.kind==="manual");
+  const automated=data.sources.filter(s=>s.kind==="visual");const accountSources=data.sources.filter(s=>s.loginRequired);
   return <section className="resultsWrap">
     <header className="resultsHeader"><div><span className="successDot">✓</span><div><small>اكتملت جولة البحث</small><h1>تقرير أثر الصورة</h1></div></div><button className="secondary" onClick={onReset}>بحث بصورة أخرى</button></header>
     <div className="summaryGrid"><article className="assetCard"><img src={preview} alt="الصورة التي جرى البحث عنها"/><div><small>معرّف الأصل</small><b dir="ltr">{data.search.assetId}</b><span>{data.search.width} × {data.search.height}</span></div></article>
-      <article><strong>{automated.length}</strong><span>مصادر بُحثت تلقائيًا</span></article><article><strong>{automated.filter(s=>s.status==="available").length}</strong><span>صفحات نتائج فعلية</span></article><article><strong>{manual.length}</strong><span>مصادر تتطلب رفعًا مباشرًا</span></article></div>
+      <article><strong>{automated.length}</strong><span>مصادر بُحثت تلقائيًا</span></article><article><strong>{automated.filter(s=>s.status==="available").length}</strong><span>صفحات نتائج فعلية</span></article><article><strong>{accountSources.length}</strong><span>منصات بحساب مجاني</span></article></div>
     <div className="truthNotice"><b>ماذا تعني هذه الأرقام؟</b><p>صفحة النتائج تعني أن المحرك استلم الصورة وأعاد رابط بحث. لا ندّعي عدد التطابقات لأن استخراجه آليًا من صفحات المحركات قد يكون محظورًا أو غير موثوق.</p></div>
     <div className="sectionTitle"><div><h2>المصادر وحالة الوصول</h2><p>لا نعرض مصدرًا على أنه ناجح إن لم يُرجع رابطًا يمكن فتحه.</p></div><span>{data.sources.length} موصلات</span></div>
-    <div className="sourceCards">{data.sources.map(source=><article className="sourceCard" key={source.id}><div className="sourceTop"><div className="sourceLogo">{source.name.slice(0,1)}</div><div><h3>{source.name}</h3><span className={source.status==="available"?"status ok":"status bad"}>{source.status==="available"?(source.kind==="visual"?"تم البحث فعليًا":"متاح برفع مباشر"):"المصدر غير متاح"}</span></div></div><p>{source.detail}</p>{source.resultUrl&&<a className="openResult" href={source.resultUrl} target="_blank" rel="noreferrer">{source.kind==="visual"?"فتح صفحة النتائج":"فتح المصدر ورفع الصورة"} <span>↗</span></a>}</article>)}</div>
+    <div className="sourceCards">{data.sources.map(source=><article className="sourceCard" key={source.id}><div className="sourceTop"><div className="sourceLogo">{source.name.slice(0,1)}</div><div><h3>{source.name}</h3><span className={source.status==="available"?"status ok":"status bad"}>{source.status==="available"?(source.kind==="visual"?"تم البحث فعليًا":source.loginRequired?"يتطلب حسابًا مجانيًا":"متاح برفع مباشر"):"المصدر غير متاح"}</span></div></div><p>{source.detail}</p>{source.resultUrl&&<a className="openResult" href={source.resultUrl} target="_blank" rel="noreferrer">{source.kind==="visual"?"فتح صفحة النتائج":source.loginRequired?(source.imageSearch?"فتح Pinterest Lens":"تسجيل الدخول والبحث اليدوي"):"فتح المصدر ورفع الصورة"} <span>↗</span></a>}</article>)}</div>
     <article className="fingerprint"><div><small>البصمة الرقمية SHA-256</small><code dir="ltr">{data.search.sha256}</code></div><button onClick={()=>navigator.clipboard.writeText(data.search.sha256)}>نسخ البصمة</button></article>
     <ReportForm searchId={data.search.id}/>
   </section>
