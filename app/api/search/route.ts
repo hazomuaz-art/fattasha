@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { searches, sourceRuns } from "@/db/schema";
+import { matches, searches, sourceRuns } from "@/db/schema";
 import { runConnectors } from "@/lib/connectors";
 import { requestUserId } from "@/lib/identity";
 
@@ -25,15 +25,18 @@ export async function POST(request:Request){
     const objectKey=`${owner}/${id}/original`;
     await env.IMAGES_BUCKET.put(objectKey,image.stream(),{httpMetadata:{contentType:image.type}});
 
-    const results=await runConnectors(image,image.name);
     const db=getDb();
+    const publicToken=crypto.randomUUID()+crypto.randomUUID();const publicExpiresAt=new Date(Date.now()+30*60*1000);
     await db.insert(searches).values({id,userId:owner,filename:image.name,contentType:image.type,byteSize:image.size,
-      sha256,width,height,objectKey,status:"completed",searchedSources:results.length,
-      availableSources:results.filter(r=>r.status==="available").length,createdAt:new Date()});
+      sha256,width,height,objectKey,publicToken,publicExpiresAt,status:"searching",searchedSources:0,availableSources:0,createdAt:new Date()});
+    const publicImageUrl=`${new URL(request.url).origin}/api/public-image/${publicToken}`;
+    const results=await runConnectors(image,image.name,publicImageUrl);const found=results.flatMap(r=>r.matches||[]);
+    await db.update(searches).set({status:"completed",searchedSources:results.filter(r=>r.searched).length,availableSources:found.length}).where(eq(searches.id,id));
     await db.insert(sourceRuns).values(results.map(r=>({searchId:id,connector:r.name,status:r.status,
-      resultUrl:r.resultUrl||null,detail:r.detail,durationMs:r.durationMs})));
+      resultUrl:r.resultUrl||null,detail:r.detail,durationMs:r.durationMs,matchCount:r.matches?.length||0})));
+    if(found.length)await db.insert(matches).values(found.map(match=>({id:crypto.randomUUID(),searchId:id,connector:"SauceNAO",...match,createdAt:new Date()})));
     return Response.json({search:{id,assetId:`ATH-${id.slice(0,8).toUpperCase()}`,sha256,width,height,
-      createdAt:new Date().toISOString()},sources:results});
+      createdAt:new Date().toISOString()},sources:results,matches:found});
   }catch(error){
     const message=error instanceof Error?error.message:"تعذّر إكمال البحث.";
     return Response.json({error:message},{status:500});

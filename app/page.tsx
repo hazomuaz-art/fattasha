@@ -1,8 +1,9 @@
 "use client";
 import { useRef, useState } from "react";
 
-type Source={id:string;name:string;kind:"visual"|"manual";status:"available"|"unavailable";resultUrl?:string;detail:string;durationMs:number;loginRequired?:boolean;imageSearch?:boolean};
-type SearchResponse={search:{id:string;assetId:string;sha256:string;width:number;height:number;createdAt:string};sources:Source[]};
+type Match={platform:string;title:string;pageUrl:string;similarity:number;matchType:string};
+type Source={id:string;name:string;mode:"automatic"|"launcher"|"manual";status:"completed"|"no_matches"|"launcher"|"unavailable";searched:boolean;resultUrl?:string;detail:string;durationMs:number;loginRequired?:boolean;imageSearch?:boolean};
+type SearchResponse={search:{id:string;assetId:string;sha256:string;width:number;height:number;createdAt:string};sources:Source[];matches:Match[]};
 function visitorHeader(){let id=localStorage.getItem("athar-visitor-id");if(!id){id=crypto.randomUUID();localStorage.setItem("athar-visitor-id",id)}return {"x-athar-visitor":id}}
 
 export default function Home(){
@@ -53,19 +54,21 @@ export default function Home(){
     </section>}
 
     {data&&<Results data={data} preview={preview} onReset={reset}/>}
-    <section className="sourceStrip" id="how"><span>المصادر الموصولة في هذه النسخة</span><div className="sourceNames"><b>Google Lens · تلقائي</b><b>TinEye / Yandex / Bing · رفع مباشر</b><b>Pinterest Lens · حساب مجاني</b><b>منصات اجتماعية · بحث يدوي بحساب مجاني</b></div></section>
+    <section className="sourceStrip" id="how"><span>المصادر الموصولة في هذه النسخة</span><div className="sourceNames"><b>SauceNAO · نتائج آلية موثقة</b><b>Google / TinEye / Yandex / IQDB · روابط مهيأة بالصورة</b><b>Pinterest Lens · حساب مجاني</b><b>منصات اجتماعية · بحث يدوي بحساب مجاني</b></div></section>
   </main>
 }
 
 function Results({data,preview,onReset}:{data:SearchResponse;preview:string;onReset:()=>void}){
-  const automated=data.sources.filter(s=>s.kind==="visual");const accountSources=data.sources.filter(s=>s.loginRequired);
+  const automated=data.sources.filter(s=>s.searched);const launchers=data.sources.filter(s=>s.mode==="launcher");
   return <section className="resultsWrap">
     <header className="resultsHeader"><div><span className="successDot">✓</span><div><small>اكتملت جولة البحث</small><h1>تقرير أثر الصورة</h1></div></div><button className="secondary" onClick={onReset}>بحث بصورة أخرى</button></header>
     <div className="summaryGrid"><article className="assetCard"><img src={preview} alt="الصورة التي جرى البحث عنها"/><div><small>معرّف الأصل</small><b dir="ltr">{data.search.assetId}</b><span>{data.search.width} × {data.search.height}</span></div></article>
-      <article><strong>{automated.length}</strong><span>مصادر بُحثت تلقائيًا</span></article><article><strong>{automated.filter(s=>s.status==="available").length}</strong><span>صفحات نتائج فعلية</span></article><article><strong>{accountSources.length}</strong><span>منصات بحساب مجاني</span></article></div>
-    <div className="truthNotice"><b>ماذا تعني هذه الأرقام؟</b><p>صفحة النتائج تعني أن المحرك استلم الصورة وأعاد رابط بحث. لا ندّعي عدد التطابقات لأن استخراجه آليًا من صفحات المحركات قد يكون محظورًا أو غير موثوق.</p></div>
+      <article><strong>{automated.length}</strong><span>مصادر بُحثت تلقائيًا</span></article><article><strong>{data.matches.length}</strong><span>تطابقات قابلة للتحقق</span></article><article><strong>{launchers.length}</strong><span>محركات مهيأة بالصورة</span></article></div>
+    <div className="truthNotice"><b>الفرق مهم</b><p>نتائج SauceNAO أدناه من بحث فعلي ويمكن فتح مصادرها. أما Google وTinEye وYandex وغيرها فهي روابط مهيأة بالصورة لإكمال البحث في موقع المصدر، ولا نحسبها كتطابقات.</p></div>
+    <div className="sectionTitle"><div><h2>التطابقات المؤكدة</h2><p>نعرض فقط نتائج بنسبة تشابه 70٪ فأعلى وروابط مصدر قابلة للفتح.</p></div><span>{data.matches.length} نتائج</span></div>
+    {data.matches.length?<div className="sourceCards">{data.matches.map((match,index)=><article className="sourceCard" key={match.pageUrl}><div className="sourceTop"><div className="sourceLogo">{index+1}</div><div><h3>{match.title}</h3><span className="status ok">{match.platform} · {match.similarity.toFixed(2)}٪</span></div></div><p>{match.matchType} — تحقّق بصريًا من المصدر قبل اتخاذ أي إجراء.</p><a className="openResult" href={match.pageUrl} target="_blank" rel="noreferrer">فتح المصدر الأصلي <span>↗</span></a></article>)}</div>:<div className="empty">لم يظهر تطابق موثوق في المصدر الآلي لهذه الصورة. يمكنك متابعة البحث عبر المحركات المهيأة أدناه.</div>}
     <div className="sectionTitle"><div><h2>المصادر وحالة الوصول</h2><p>لا نعرض مصدرًا على أنه ناجح إن لم يُرجع رابطًا يمكن فتحه.</p></div><span>{data.sources.length} موصلات</span></div>
-    <div className="sourceCards">{data.sources.map(source=><article className="sourceCard" key={source.id}><div className="sourceTop"><div className="sourceLogo">{source.name.slice(0,1)}</div><div><h3>{source.name}</h3><span className={source.status==="available"?"status ok":"status bad"}>{source.status==="available"?(source.kind==="visual"?"تم البحث فعليًا":source.loginRequired?"يتطلب حسابًا مجانيًا":"متاح برفع مباشر"):"المصدر غير متاح"}</span></div></div><p>{source.detail}</p>{source.resultUrl&&<a className="openResult" href={source.resultUrl} target="_blank" rel="noreferrer">{source.kind==="visual"?"فتح صفحة النتائج":source.loginRequired?(source.imageSearch?"فتح Pinterest Lens":"تسجيل الدخول والبحث اليدوي"):"فتح المصدر ورفع الصورة"} <span>↗</span></a>}</article>)}</div>
+    <div className="sourceCards">{data.sources.map(source=><article className="sourceCard" key={source.id}><div className="sourceTop"><div className="sourceLogo">{source.name.slice(0,1)}</div><div><h3>{source.name}</h3><span className={source.status==="completed"?"status ok":source.status==="unavailable"?"status bad":"status"}>{source.status==="completed"?"تم البحث ووجد تطابقات":source.status==="no_matches"?"تم البحث — لا تطابق موثوق":source.status==="unavailable"?"تعذّر البحث":"جاهز للفتح في المصدر"}</span></div></div><p>{source.detail}</p>{source.resultUrl&&<a className="openResult" href={source.resultUrl} target="_blank" rel="noreferrer">{source.loginRequired?(source.imageSearch?"فتح البحث البصري":"تسجيل الدخول والبحث اليدوي"):source.id==="bing"?"فتح المصدر ورفع الصورة":"فتح البحث المهيأ بالصورة"} <span>↗</span></a>}</article>)}</div>
     <article className="fingerprint"><div><small>البصمة الرقمية SHA-256</small><code dir="ltr">{data.search.sha256}</code></div><button onClick={()=>navigator.clipboard.writeText(data.search.sha256)}>نسخ البصمة</button></article>
     <ReportForm searchId={data.search.id}/>
   </section>
