@@ -3,6 +3,7 @@ export type ConnectorResult={id:string;name:string;mode:"automatic"|"launcher"|"
 
 function decode(value:string){return value.replace(/<[^>]*>/g,"").replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&lt;/g,"<").replace(/&gt;/g,">").trim()}
 function absolute(value:string){try{return new URL(decode(value),"https://saucenao.com").toString()}catch{return ""}}
+function unsafeTitle(value:string){return /\b(penis|porn|hentai|nude|sex|xxx)\b/i.test(value)}
 
 async function sauceNao(image:Blob,filename:string):Promise<ConnectorResult>{
   const started=Date.now();
@@ -15,6 +16,7 @@ async function sauceNao(image:Blob,filename:string):Promise<ConnectorResult>{
     for(const block of blocks){
       const similarity=Number(block.match(/resultsimilarityinfo[^>]*>([\d.]+)%/)?.[1]||0);if(similarity<70)continue;
       const title=decode(block.match(/resulttitle[^>]*>([\s\S]*?)<\/div>/)?.[1]||"تطابق بصري");
+      if(unsafeTitle(title))continue;
       const platform=decode(block.match(/title="Index #[^"]*?:\s*([^"-]+)/)?.[1]||"مصدر ويب");
       const urls=[...block.matchAll(/href="([^"]+)"/g)].map(m=>absolute(m[1])).filter(url=>url.startsWith("http")&&!new URL(url).hostname.endsWith("saucenao.com"));
       const pageUrl=urls[0];if(!pageUrl||seen.has(pageUrl))continue;seen.add(pageUrl);
