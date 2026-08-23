@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 export const metadata: Metadata = {
-  metadataBase: new URL("https://athar-image-trace.huzifamuaz4.chatgpt.site"),
+  metadataBase: new URL("https://fattasha.vercel.app"),
   title: "فتّاشة — فتّش عن صورتك على الإنترنت",
   description: "أداة بحث بصري متعددة المصادر تساعدك في العثور على نسخ صورك ومصادرها.",
   openGraph: { title:"فتّاشة — أين ظهرت صورتك؟", description:"بحث بصري حقيقي متعدد المصادر", images:["/og.png"], locale:"ar_SA", type:"website" },
