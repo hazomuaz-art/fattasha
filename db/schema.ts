@@ -53,6 +53,7 @@ export const reports = sqliteTable("reports", {
 export const facebookUsers = sqliteTable("facebook_users", {
   facebookId: text("facebook_id").primaryKey(),
   name: text("name").notNull(),
+  profileLink: text("profile_link"),
   userId: text("user_id").notNull(),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   lastLoginAt: integer("last_login_at", { mode: "timestamp" }).notNull(),
