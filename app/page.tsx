@@ -13,14 +13,12 @@ export default function Home(){
   const [data,setData]=useState<SearchResponse|null>(null); const [error,setError]=useState("");
   const [reminder,setReminder]=useState("");
   const [notificationPrompt,setNotificationPrompt]=useState(false);const [notificationMessage,setNotificationMessage]=useState("");
-  const [facebookStatus,setFacebookStatus]=useState<"checking"|"idle"|"connected"|"failed">("checking");
-  useEffect(()=>{const status=new URLSearchParams(location.search).get("facebook");const id=visitorHeader()["x-athar-visitor"];fetch(`/api/auth/facebook/status?visitor=${encodeURIComponent(id)}`).then(r=>r.json()).then((data:{connected?:boolean})=>setFacebookStatus(data.connected?"connected":status==="failed"?"failed":"idle")).catch(()=>setFacebookStatus("idle"));},[]);
   useEffect(()=>{const messages=["اللهم صلِّ وسلم على نبينا محمد","سبحان الله وبحمده","لا حول ولا قوة إلا بالله","أستغفر الله العظيم"];let index=0;const show=()=>{setReminder(messages[index++%messages.length]);setTimeout(()=>setReminder(""),6500)};const timer=setInterval(show,30000);return()=>clearInterval(timer)},[]);
   useEffect(()=>{if(!("serviceWorker" in navigator)||!("Notification" in window))return;navigator.serviceWorker.register("/notification-sw.js").then(async registration=>{const last=Number(localStorage.getItem("fattasha-reminder-shown")||0);if(Notification.permission==="granted"&&Date.now()-last>24*60*60*1000){await registration.showNotification("فتّاشة — حان وقت إعادة الفحص",{body:"أعد رفع صورتك لإجراء بحث جديد والتحقق من ظهور نسخ حديثة عبر المصادر ومحركات البحث المتاحة.",icon:"/favicon.svg",badge:"/favicon.svg",tag:"fattasha-recheck",data:{url:"/"}});localStorage.setItem("fattasha-reminder-shown",String(Date.now()))}else if(Notification.permission==="default")setNotificationPrompt(true)}).catch(()=>{});},[]);
   async function enableNotifications(){if(!("Notification" in window)){setNotificationMessage("متصفحك لا يدعم إشعارات الموقع.");return}const permission=await Notification.requestPermission();if(permission!=="granted"){setNotificationMessage("لم يتم السماح بالإشعارات. يمكنك تغيير الإذن من إعدادات المتصفح.");return}const registration=await navigator.serviceWorker.ready;await registration.showNotification("تم تفعيل تنبيهات فتّاشة",{body:"سنذكّرك بإعادة فحص صورتك عند عودتك إلى الموقع.",icon:"/favicon.svg",badge:"/favicon.svg",tag:"fattasha-enabled",data:{url:"/"}});localStorage.setItem("fattasha-reminder-shown",String(Date.now()));setNotificationPrompt(false);setNotificationMessage("تم تفعيل إشعارات إعادة الفحص.")}
 
   function choose(next?:File){
-    if(facebookStatus!=="connected"){setError("سجّل الدخول عبر فيسبوك أولًا قبل رفع الصورة.");setPhase("error");return}if(!next)return; if(!["image/jpeg","image/png","image/webp"].includes(next.type)||next.size>10*1024*1024){setError("اختر صورة JPG أو PNG أو WEBP بحجم لا يتجاوز 10 ميجابايت.");setPhase("error");return}
+    if(!next)return; if(!["image/jpeg","image/png","image/webp"].includes(next.type)||next.size>10*1024*1024){setError("اختر صورة JPG أو PNG أو WEBP بحجم لا يتجاوز 10 ميجابايت.");setPhase("error");return}
     if(preview)URL.revokeObjectURL(preview);setFile(next);setPreview(URL.createObjectURL(next));setData(null);setError("");setPhase("idle");
   }
   async function start(){
@@ -45,7 +43,7 @@ export default function Home(){
       <div className="heroIntro"><div className="eyebrow">فتّاشة — بحث بصري ذكي</div>
       <h1 id="hero-title">فتّش عن صورتك<br/><em>في ثوانٍ</em></h1>
       <p className="lead">ارفع صورة واحدة. نفحص التطابقات المتاحة، ونجهّزها للبحث في المحركات الأخرى، ثم نعرض الفرق بوضوح بين النتيجة المؤكدة والرابط الخارجي.</p></div>
-      {facebookStatus!=="connected"?<section className="facebookGate"><span className="facebookGateIcon">f</span><h2>سجّل الدخول قبل رفع الصورة</h2><p>بعد موافقتك نحفظ الاسم ومعرّف التطبيق ورابط ملفك الشخصي الذي تسمح به Meta، ونربطها بعملية البحث.</p><button type="button" onClick={()=>{const id=visitorHeader()["x-athar-visitor"];location.href=`/api/auth/facebook/start?visitor=${encodeURIComponent(id)}`}} disabled={facebookStatus==="checking"}>{facebookStatus==="checking"?"جارٍ التحقق…":"المتابعة عبر فيسبوك"}</button>{facebookStatus==="failed"&&<small>تعذّر تسجيل الدخول. حاول مرة أخرى.</small>}</section>:!file?<section className={`uploadCard ${dragging?"dragging":""}`} aria-label="رفع صورة للبحث" onDragOver={e=>{e.preventDefault();setDragging(true)}} onDragLeave={()=>setDragging(false)} onDrop={e=>{e.preventDefault();setDragging(false);choose(e.dataTransfer.files[0])}}>
+      {!file?<section className={`uploadCard ${dragging?"dragging":""}`} aria-label="رفع صورة للبحث" onDragOver={e=>{e.preventDefault();setDragging(true)}} onDragLeave={()=>setDragging(false)} onDrop={e=>{e.preventDefault();setDragging(false);choose(e.dataTransfer.files[0])}}>
         <div className="uploadIcon" aria-hidden="true"><span>↑</span></div><h2>ضع الصورة هنا</h2><p>JPG أو PNG أو WEBP — حتى 10 ميجابايت</p>
         <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={e=>choose(e.target.files?.[0])}/>
         <button className="primary" type="button" onClick={()=>inputRef.current?.click()}>اختيار صورة <span aria-hidden="true">←</span></button>
@@ -56,7 +54,6 @@ export default function Home(){
         <button className="primary searchBtn" onClick={start} disabled={busy}>{busy?"جارٍ التنفيذ…":"ابدأ البحث الحقيقي"} <span>←</span></button>
       </section>}
       <p className="securityPurpose">لأغراض تشغيل البحث والحماية من إساءة الاستخدام.</p>
-      {facebookStatus==="connected"&&<div className="facebookLogin"><span>✓ تم تسجيل الدخول وربط بيانات فيسبوك بعمليات البحث</span></div>}
       {busy&&<div className="progressPanel" role="status" aria-live="polite"><div className="spinner"/><div><b>{phase==="analyzing"?"تحليل الصورة وإنشاء البصمة…":"البحث بالتوازي في المصادر المتاحة…"}</b><p>لن تظهر أي نتيجة قبل أن يعيد المصدر رابطًا فعليًا.</p></div></div>}
       {phase==="error"&&<div className="errorBox" role="alert">{error}</div>}
       <div className="trustRow" id="privacy"><div><span className="trustIcon">01</span><p><b>نتائج موثقة</b><small>الرابط يأتي من المصدر</small></p></div><div><span className="trustIcon">02</span><p><b>بيانات وصور محمية</b><small>تشفير أثناء النقل والتخزين مع بصمة SHA-256</small></p></div><div><span className="trustIcon">03</span><p><b>صورك ليست عامة</b><small>رابط البحث ينتهي بعد 30 دقيقة</small></p></div></div>
