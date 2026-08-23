@@ -21,7 +21,10 @@ export function secureJson(body: unknown, init: ResponseInit = {}) {
 export function sameOrigin(request: Request) {
   const origin = request.headers.get("origin");
   if (!origin) return true;
-  try { return new URL(origin).origin === new URL(request.url).origin; } catch { return false; }
+  try {
+    const trusted=new Set([new URL(request.url).origin,"https://fattasha.vercel.app","https://athar-image-trace.huzifamuaz4.chatgpt.site"]);
+    return trusted.has(new URL(origin).origin);
+  } catch { return false; }
 }
 
 export function rateLimit(request: Request, scope: string, limit: number) {
