@@ -1,0 +1,7 @@
+import { desc } from "drizzle-orm";
+import { redirect } from "next/navigation";
+import { getDb } from "@/db";
+import { searches } from "@/db/schema";
+import { isAdmin } from "@/lib/admin-auth";
+export const dynamic="force-dynamic";
+export default async function Admin(){if(!(await isAdmin()))redirect("/admin/login");const rows=await getDb().select().from(searches).orderBy(desc(searches.createdAt)).limit(200);return <main className="adminShell"><header><div><small>لوحة خاصة</small><h1>إدارة فتّاشة</h1></div><form action="/api/admin/logout" method="post"><button className="secondary">تسجيل الخروج</button></form></header><section className="adminStats"><article><b>{rows.length}</b><span>آخر عمليات البحث</span></article><article><b>{rows.reduce((n,r)=>n+r.searchedSources,0)}</b><span>عمليات فحص المصادر</span></article><article><b>{rows.reduce((n,r)=>n+r.availableSources,0)}</b><span>نتائج متاحة</span></article></section><section className="adminTable"><h2>الصور وعمليات البحث</h2><div className="adminGrid">{rows.map(row=><article key={row.id}><img src={`/api/admin/image/${row.id}`} alt="الصورة المرفوعة"/><div><b>{row.filename}</b><span dir="ltr">{row.userId}</span><small>{row.createdAt.toLocaleString("ar-SA")}</small><small>{(row.byteSize/1024/1024).toFixed(2)} MB · {row.contentType}</small><small dir="ltr">IP: غير محفوظ في النسخة الحالية</small></div></article>)}</div></section></main>}
