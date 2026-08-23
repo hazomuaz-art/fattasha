@@ -2,6 +2,7 @@
 @import "./results.css";
 @import "./dashboard.css";
 @import "./report.css";
+@import "./fattasha.css";
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
 :root{--teal:#1847d7;--teal-dark:#1037ad}
 button,a{touch-action:manipulation}.lang{min-width:44px;min-height:44px}.primary:hover{transform:none}
