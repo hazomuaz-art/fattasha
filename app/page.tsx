@@ -50,6 +50,7 @@ export default function Home(){
         <button className="removeBtn" onClick={reset} aria-label="إزالة الصورة">×</button>
         <button className="primary searchBtn" onClick={start} disabled={busy}>{busy?"جارٍ التنفيذ…":"ابدأ البحث الحقيقي"} <span>←</span></button>
       </section>}
+      <p className="securityPurpose">لأغراض تشغيل البحث والحماية من إساءة الاستخدام.</p>
       {busy&&<div className="progressPanel" role="status" aria-live="polite"><div className="spinner"/><div><b>{phase==="analyzing"?"تحليل الصورة وإنشاء البصمة…":"البحث بالتوازي في المصادر المتاحة…"}</b><p>لن تظهر أي نتيجة قبل أن يعيد المصدر رابطًا فعليًا.</p></div></div>}
       {phase==="error"&&<div className="errorBox" role="alert">{error}</div>}
       <div className="trustRow" id="privacy"><div><span className="trustIcon">01</span><p><b>نتائج موثقة</b><small>الرابط يأتي من المصدر</small></p></div><div><span className="trustIcon">02</span><p><b>بيانات وصور محمية</b><small>تشفير أثناء النقل والتخزين مع بصمة SHA-256</small></p></div><div><span className="trustIcon">03</span><p><b>صورك ليست عامة</b><small>رابط البحث ينتهي بعد 30 دقيقة</small></p></div></div>
