@@ -9,9 +9,9 @@ async function sauceNao(image:Blob,filename:string):Promise<ConnectorResult>{
   const started=Date.now();
   try{
     const form=new FormData();form.append("file",image,filename);form.append("db","999");
-    const response=await fetch("https://saucenao.com/search.php",{method:"POST",body:form,headers:{"user-agent":"Mozilla/5.0 AtharImageTrace/1.0"}});
+    const response=await fetch("https://saucenao.com/search.php",{method:"POST",body:form,headers:{"user-agent":"Mozilla/5.0 Fattasha/1.0"},signal:AbortSignal.timeout(15_000)});
     if(!response.ok)throw new Error(`HTTP ${response.status}`);
-    const html=await response.text();const blocks=html.match(/<div class="result"[\s\S]*?(?=<div class="result"|<div id="footer")/g)||[];
+    const html=(await response.text()).slice(0,2_000_000);const blocks=html.match(/<div class="result"[\s\S]*?(?=<div class="result"|<div id="footer")/g)||[];
     const matches:MatchResult[]=[];const seen=new Set<string>();
     for(const block of blocks){
       const similarity=Number(block.match(/resultsimilarityinfo[^>]*>([\d.]+)%/)?.[1]||0);if(similarity<70)continue;
