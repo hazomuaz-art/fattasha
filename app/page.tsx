@@ -57,7 +57,7 @@ export default function Home(){
 
     {data&&<Results data={data} preview={preview} onReset={reset}/>}
     <section className="sourceStrip" id="how"><span>المصادر التي تساعدك فتّاشة في الوصول إليها</span><div className="platformRail">{["google-lens","tineye","yandex","iqdb","pinterest","facebook","instagram","x","tiktok","youtube"].map(id=><PlatformIcon key={id} id={id}/>)}</div></section>
-    <aside className="creatorCard"><img src="/huzifa-portrait.png" alt="حذيفة معاذ أحمد"/><div><small>صُنعت بحب بواسطة</small><b>Huzifa Muaz Ahmed</b><span>تابعني على منصة فيسبوك</span></div><a href="/f" target="_blank" rel="noreferrer" aria-label="متابعة حذيفة على فيسبوك">متابعة <span>f</span></a></aside>
+    <aside className="creatorCard"><img src="/facebook-profile.jpg" alt="لقطة حساب حذيفة على فيسبوك"/><div><small>صُنعت بحب بواسطة</small><b>Huzifa Muaz Ahmed</b><span>تابعني على منصة فيسبوك</span></div><a href="/f" target="_blank" rel="noreferrer" aria-label="متابعة حذيفة على فيسبوك">متابعة <span>f</span></a></aside>
     {reminder&&<div className="reminderToast" role="status" aria-live="polite"><span>✦</span>{reminder}<button onClick={()=>setReminder("")} aria-label="إغلاق التذكير">×</button></div>}
   </main>
 }
