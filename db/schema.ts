@@ -49,3 +49,11 @@ export const reports = sqliteTable("reports", {
   status: text("status").notNull().default("open"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 }, (table) => [index("idx_reports_user_created").on(table.userId, table.createdAt)]);
+
+export const facebookUsers = sqliteTable("facebook_users", {
+  facebookId: text("facebook_id").primaryKey(),
+  name: text("name").notNull(),
+  userId: text("user_id").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  lastLoginAt: integer("last_login_at", { mode: "timestamp" }).notNull(),
+}, (table) => [index("idx_facebook_users_user").on(table.userId)]);

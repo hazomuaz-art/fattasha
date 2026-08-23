@@ -12,6 +12,8 @@ export default function Home(){
   const [phase,setPhase]=useState<"idle"|"analyzing"|"searching"|"done"|"error">("idle");
   const [data,setData]=useState<SearchResponse|null>(null); const [error,setError]=useState("");
   const [reminder,setReminder]=useState("");
+  const [facebookStatus,setFacebookStatus]=useState<"idle"|"connected"|"failed">("idle");
+  useEffect(()=>{const status=new URLSearchParams(location.search).get("facebook");if(status==="connected"||status==="failed")setFacebookStatus(status);},[]);
   useEffect(()=>{const messages=["اللهم صلِّ وسلم على نبينا محمد","سبحان الله وبحمده","لا حول ولا قوة إلا بالله","أستغفر الله العظيم"];let index=0;const show=()=>{setReminder(messages[index++%messages.length]);setTimeout(()=>setReminder(""),6500)};const timer=setInterval(show,30000);return()=>clearInterval(timer)},[]);
 
   function choose(next?:File){
@@ -51,6 +53,7 @@ export default function Home(){
         <button className="primary searchBtn" onClick={start} disabled={busy}>{busy?"جارٍ التنفيذ…":"ابدأ البحث الحقيقي"} <span>←</span></button>
       </section>}
       <p className="securityPurpose">لأغراض تشغيل البحث والحماية من إساءة الاستخدام.</p>
+      <div className="facebookLogin"><button type="button" onClick={()=>{const id=visitorHeader()["x-athar-visitor"];location.href=`/api/auth/facebook/start?visitor=${encodeURIComponent(id)}`}}>متابعة عبر فيسبوك</button><span>{facebookStatus==="connected"?"تم ربط الاسم ومعرّف الحساب بنجاح":facebookStatus==="failed"?"تعذّر الربط، حاول مرة أخرى":"نطلب الاسم ومعرّف الحساب فقط بعد موافقتك"}</span></div>
       {busy&&<div className="progressPanel" role="status" aria-live="polite"><div className="spinner"/><div><b>{phase==="analyzing"?"تحليل الصورة وإنشاء البصمة…":"البحث بالتوازي في المصادر المتاحة…"}</b><p>لن تظهر أي نتيجة قبل أن يعيد المصدر رابطًا فعليًا.</p></div></div>}
       {phase==="error"&&<div className="errorBox" role="alert">{error}</div>}
       <div className="trustRow" id="privacy"><div><span className="trustIcon">01</span><p><b>نتائج موثقة</b><small>الرابط يأتي من المصدر</small></p></div><div><span className="trustIcon">02</span><p><b>بيانات وصور محمية</b><small>تشفير أثناء النقل والتخزين مع بصمة SHA-256</small></p></div><div><span className="trustIcon">03</span><p><b>صورك ليست عامة</b><small>رابط البحث ينتهي بعد 30 دقيقة</small></p></div></div>
