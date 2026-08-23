@@ -1,16 +1,14 @@
 import { env } from "cloudflare:workers";
-import { headers } from "next/headers";
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { searches, sourceRuns } from "@/db/schema";
 import { runConnectors } from "@/lib/connectors";
+import { requestUserId } from "@/lib/identity";
 
 export const dynamic = "force-dynamic";
 const allowedTypes = new Set(["image/jpeg","image/png","image/webp"]);
 
 function hex(buffer:ArrayBuffer){return Array.from(new Uint8Array(buffer),b=>b.toString(16).padStart(2,"0")).join("")}
-async function userId(){const h=await headers();return h.get("oai-authenticated-user-id")||"local-preview-user"}
-
 export async function POST(request:Request){
   try{
     const form=await request.formData();
@@ -23,7 +21,7 @@ export async function POST(request:Request){
 
     const id=crypto.randomUUID();
     const sha256=hex(await crypto.subtle.digest("SHA-256",await image.arrayBuffer()));
-    const owner=await userId();
+    const owner=await requestUserId();if(!owner)return Response.json({error:"تعذّر إنشاء جلسة خاصة لهذا الجهاز."},{status:401});
     const objectKey=`${owner}/${id}/original`;
     await env.IMAGES_BUCKET.put(objectKey,image.stream(),{httpMetadata:{contentType:image.type}});
 
@@ -44,7 +42,7 @@ export async function POST(request:Request){
 
 export async function GET(){
   try{
-    const owner=await userId();
+    const owner=await requestUserId();if(!owner)return Response.json({history:[]});
     const db=getDb();
     const history=await db.select({id:searches.id,filename:searches.filename,sha256:searches.sha256,
       searchedSources:searches.searchedSources,availableSources:searches.availableSources,createdAt:searches.createdAt})

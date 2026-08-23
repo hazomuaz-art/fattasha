@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 
 type Source={id:string;name:string;kind:"visual"|"manual";status:"available"|"unavailable";resultUrl?:string;detail:string;durationMs:number};
 type SearchResponse={search:{id:string;assetId:string;sha256:string;width:number;height:number;createdAt:string};sources:Source[]};
+function visitorHeader(){let id=localStorage.getItem("athar-visitor-id");if(!id){id=crypto.randomUUID();localStorage.setItem("athar-visitor-id",id)}return {"x-athar-visitor":id}}
 
 export default function Home(){
   const inputRef=useRef<HTMLInputElement>(null); const [dragging,setDragging]=useState(false);
@@ -19,7 +20,7 @@ export default function Home(){
     try{
       const dimensions=await new Promise<{width:number;height:number}>((resolve,reject)=>{const image=new Image();image.onload=()=>resolve({width:image.naturalWidth,height:image.naturalHeight});image.onerror=reject;image.src=preview});
       setPhase("searching"); const form=new FormData();form.append("image",file);form.append("width",String(dimensions.width));form.append("height",String(dimensions.height));
-      const response=await fetch("/api/search",{method:"POST",body:form});const payload=await response.json() as SearchResponse&{error?:string};
+      const response=await fetch("/api/search",{method:"POST",body:form,headers:visitorHeader()});const payload=await response.json() as SearchResponse&{error?:string};
       if(!response.ok)throw new Error(payload.error||"تعذّر إكمال البحث.");setData(payload);setPhase("done");
     }catch(e){setError(e instanceof Error?e.message:"تعذّر إكمال البحث.");setPhase("error")}
   }
@@ -72,6 +73,6 @@ function Results({data,preview,onReset}:{data:SearchResponse;preview:string;onRe
 
 function ReportForm({searchId}:{searchId:string}){
   const [open,setOpen]=useState(false);const [message,setMessage]=useState("");
-  async function submit(event:React.FormEvent<HTMLFormElement>){event.preventDefault();const form=new FormData(event.currentTarget);setMessage("جارٍ الحفظ…");const response=await fetch("/api/reports",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({searchId,sourceUrl:form.get("sourceUrl"),reportType:form.get("reportType"),notes:form.get("notes")})});const payload=await response.json() as {caseId?:string;error?:string};setMessage(response.ok?`تم إنشاء البلاغ: ${payload.caseId}`:payload.error||"تعذّر الحفظ")}
+  async function submit(event:React.FormEvent<HTMLFormElement>){event.preventDefault();const form=new FormData(event.currentTarget);setMessage("جارٍ الحفظ…");const response=await fetch("/api/reports",{method:"POST",headers:{"content-type":"application/json",...visitorHeader()},body:JSON.stringify({searchId,sourceUrl:form.get("sourceUrl"),reportType:form.get("reportType"),notes:form.get("notes")})});const payload=await response.json() as {caseId?:string;error?:string};setMessage(response.ok?`تم إنشاء البلاغ: ${payload.caseId}`:payload.error||"تعذّر الحفظ")}
   return <section className="reportBox"><div><h2>وجدت استخدامًا غير مصرح به؟</h2><p>سجّل الرابط كحالة مرتبطة ببصمة هذه الصورة.</p></div>{!open?<button className="secondary" onClick={()=>setOpen(true)}>إنشاء بلاغ</button>:<form onSubmit={submit}><input name="sourceUrl" type="url" required placeholder="https://example.com/photo"/><select name="reportType" required defaultValue="سرقة صورة"><option>سرقة صورة</option><option>انتحال شخصية</option><option>استخدام بدون إذن</option><option>حساب مزيف</option><option>استخدام تجاري</option><option>نشر مسيء</option><option>إساءة أخرى</option></select><input name="notes" placeholder="ملاحظات اختيارية"/><button className="primary" type="submit">حفظ البلاغ</button>{message&&<span className="formMessage">{message}</span>}</form>}</section>
 }
